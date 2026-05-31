@@ -1,11 +1,20 @@
 DROP TABLE IF EXISTS admin;
-CREATE TABLE admin (
-  username TEXT PRIMARY KEY,
-  password TEXT NOT NULL
+DROP TABLE IF EXISTS system_settings;
+
+CREATE TABLE system_settings (
+  id INTEGER PRIMARY KEY,        
+  admin_username TEXT NOT NULL,  
+  admin_password TEXT NOT NULL,  
+  admin_token TEXT,              
+  site_title TEXT,               
+  announcement TEXT,             
+  allow_download INTEGER         
 );
 
--- 默认账号 admin, 密码 123456 (实际部署请修改)
-INSERT INTO admin (username, password) VALUES ('admin', '123456');
+INSERT INTO system_settings 
+  (id, admin_username, admin_password, site_title, announcement, allow_download) 
+VALUES 
+  (1, 'admin', '123456', '夏雨资源库', '欢迎访问！请遵守下载规则。', 1);
 
 CREATE TABLE IF NOT EXISTS download_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
