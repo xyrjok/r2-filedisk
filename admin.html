@@ -3,150 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>夏雨后台控制台</title>
+    <title>后台控制台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
         .fade-enter { opacity: 0; transform: translateY(10px); transition: all 0.3s ease-out; }
         .fade-enter-active { opacity: 1; transform: translateY(0); }
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans antialiased min-h-screen flex items-center justify-center">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
     <div id="login-panel" class="w-full max-w-sm p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 fade-enter fade-enter-active">
         <div class="text-center mb-6">
-            <h1 class="text-xl font-bold tracking-tight">夏雨控制台</h1>
-            <p class="text-xs text-gray-500 mt-1">Admin Dashboard</p>
+            <h1 class="text-xl font-bold">后台登录</h1>
         </div>
         <form id="login-form" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">账号</label>
-                <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm" placeholder="输入管理员账号" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">密码</label>
-                <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors">
-                登 录
-            </button>
+            <input type="text" id="login-user" class="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" placeholder="账号" required>
+            <input type="password" id="login-pass" class="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600" placeholder="密码" required>
+            <button type="submit" id="login-btn" class="w-full py-2 bg-black text-white dark:bg-white dark:text-black rounded-md">登录</button>
             <div id="login-error" class="text-red-500 text-xs text-center hidden mt-2">账号或密码错误</div>
         </form>
-        <div class="mt-4 text-center">
-            <a href="/" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">&larr; 返回前台下载站</a>
-        </div>
     </div>
 
-    <div id="dashboard-panel" class="w-full max-w-4xl p-4 hidden fade-enter">
-        <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">管理中心</h1>
-                <p class="text-sm text-gray-500 mt-1">文件与系统监控</p>
-            </div>
-            <div class="flex space-x-4 items-center">
-                <span class="text-sm text-green-500 font-medium flex items-center">
-                    <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>在线
-                </span>
-                <button onclick="logout()" class="text-sm px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">退出</button>
-            </div>
+    <div id="dashboard-panel" class="w-full max-w-5xl hidden fade-enter">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">管理中心</h1>
+            <button onclick="logout()" class="text-sm px-3 py-1.5 border rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-700">退出登录</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="text-sm text-gray-500">文件总数</div>
-                <div class="text-2xl font-semibold mt-1" id="stat-files">-</div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="col-span-1 space-y-4">
+                <div class="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 class="font-medium mb-4 border-b pb-2 dark:border-gray-700">⚙️ 站点配置</h2>
+                    <form id="settings-form" class="space-y-3 text-sm">
+                        <div>
+                            <label class="block text-gray-500 mb-1">网站标题</label>
+                            <input type="text" id="set-title" class="w-full px-2 py-1.5 border rounded dark:bg-gray-700 dark:border-gray-600">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 mb-1">系统公告</label>
+                            <textarea id="set-announce" class="w-full px-2 py-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 h-20"></textarea>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="set-download" class="w-4 h-4 rounded text-blue-600">
+                            <label class="text-gray-700 dark:text-gray-300">开放文件下载</label>
+                        </div>
+                        
+                        <div class="pt-2 border-t dark:border-gray-700 mt-2">
+                            <label class="block text-gray-500 mb-1 text-xs">修改登录账号 (留空不改)</label>
+                            <input type="text" id="set-user" class="w-full px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 mb-2">
+                            <label class="block text-gray-500 mb-1 text-xs">修改登录密码 (留空不改)</label>
+                            <input type="text" id="set-pass" class="w-full px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600">
+                        </div>
+                        
+                        <button type="submit" class="w-full mt-2 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium">保存配置</button>
+                    </form>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 text-center">
+                        <div class="text-xs text-gray-500">文件数</div>
+                        <div class="text-xl font-semibold mt-1" id="stat-files">-</div>
+                    </div>
+                    <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 text-center">
+                        <div class="text-xs text-gray-500">总下载量</div>
+                        <div class="text-xl font-semibold mt-1" id="stat-downloads">-</div>
+                    </div>
+                </div>
             </div>
-            <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="text-sm text-gray-500">总下载次数 (D1统计)</div>
-                <div class="text-2xl font-semibold mt-1" id="stat-downloads">-</div>
-            </div>
-            <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col justify-center">
-                <button class="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm font-medium transition-colors shadow-sm">
-                    + 上传新文件
-                </button>
-            </div>
-        </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 font-medium text-sm">
-                资源管理
+            <div class="col-span-1 lg:col-span-2">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-full">
+                    <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                        <span class="font-medium text-sm">资源管理</span>
+                        <div>
+                            <input type="file" id="upload-input" class="hidden" onchange="handleUpload(event)">
+                            <button onclick="document.getElementById('upload-input').click()" id="upload-btn" class="text-xs px-3 py-1.5 bg-black text-white dark:bg-white dark:text-black rounded">
+                                + 上传文件
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-y-auto" style="max-height: 500px;">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <tbody id="admin-file-list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                                <tr><td class="px-4 py-8 text-center text-gray-400">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <table class="w-full text-left text-sm whitespace-nowrap">
-                <tbody id="admin-file-list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                    <tr><td class="px-6 py-8 text-center text-gray-400">暂无数据</td></tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
     <script>
-        // 简单的面板切换逻辑
-        const loginPanel = document.getElementById('login-panel');
-        const dashboardPanel = document.getElementById('dashboard-panel');
-        const loginError = document.getElementById('login-error');
+        const DOM = { login: document.getElementById('login-panel'), dash: document.getElementById('dashboard-panel'), err: document.getElementById('login-error') };
+        let currentToken = localStorage.getItem('r2_admin_token');
+        if (currentToken) showDashboard();
 
-        // 模拟登录逻辑 (实际应用中应请求 _worker.js 中的校验 API)
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-
-            // ⚠️ 这里只是前端模拟，若要真正校验，需在 _worker.js 增加 /api/admin/login 接口查 D1 数据库
-            if (user === 'admin' && pass === '123456') { 
-                loginPanel.classList.add('hidden');
-                dashboardPanel.classList.remove('hidden');
-                
-                // 触发动画重新重绘
-                requestAnimationFrame(() => {
-                    dashboardPanel.classList.add('fade-enter-active');
+            const btn = document.getElementById('login-btn'); btn.innerText = '...';
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: document.getElementById('login-user').value, password: document.getElementById('login-pass').value })
                 });
-                
-                loadAdminFiles();
-            } else {
-                loginError.classList.remove('hidden');
-            }
+                if (res.ok) {
+                    const data = await res.json();
+                    currentToken = data.token; localStorage.setItem('r2_admin_token', currentToken);
+                    DOM.err.classList.add('hidden'); showDashboard();
+                } else { DOM.err.classList.remove('hidden'); }
+            } catch(e) {}
+            btn.innerText = '登录';
         });
 
-        function logout() {
-            dashboardPanel.classList.remove('fade-enter-active');
-            setTimeout(() => {
-                dashboardPanel.classList.add('hidden');
-                loginPanel.classList.remove('hidden');
-                document.getElementById('password').value = '';
-                loginError.classList.add('hidden');
-            }, 200);
+        function showDashboard() {
+            DOM.login.classList.add('hidden'); DOM.dash.classList.remove('hidden');
+            requestAnimationFrame(() => DOM.dash.classList.add('fade-enter-active'));
+            loadAdminData();
         }
 
-        // 加载后台文件列表 (复用前台的接口，但增加删除按钮)
-        async function loadAdminFiles() {
+        function logout() {
+            localStorage.removeItem('r2_admin_token'); currentToken = null;
+            location.reload();
+        }
+
+        async function fetchAuth(url, options = {}) {
+            options.headers = { ...options.headers, 'Authorization': `Bearer ${currentToken}` };
+            const res = await fetch(url, options);
+            if (res.status === 401) logout();
+            return res;
+        }
+
+        async function loadAdminData() {
             try {
-                const res = await fetch('/api/files');
-                const files = await res.json();
-                
-                document.getElementById('stat-files').innerText = files.length;
-                // 假设从 D1 拿到了下载量，这里做个假数据演示UI
-                document.getElementById('stat-downloads').innerText = "1,024";
+                // 加载统计
+                const stats = await (await fetchAuth('/api/admin/stats')).json();
+                document.getElementById('stat-files').innerText = stats.fileCount;
+                document.getElementById('stat-downloads').innerText = stats.downloadCount;
 
-                const tbody = document.getElementById('admin-file-list');
-                tbody.innerHTML = '';
+                // 加载设置表单数据
+                const set = await (await fetchAuth('/api/admin/settings')).json();
+                document.getElementById('set-title').value = set.site_title;
+                document.getElementById('set-announce').value = set.announcement;
+                document.getElementById('set-user').value = set.admin_username;
+                document.getElementById('set-download').checked = (set.allow_download === 1);
 
+                // 加载文件
+                const files = await (await fetch('/api/files')).json();
+                const tbody = document.getElementById('admin-file-list'); tbody.innerHTML = '';
                 files.forEach(file => {
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors";
+                    tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700/30";
                     tr.innerHTML = `
                         <td class="px-4 py-3">${file.key}</td>
                         <td class="px-4 py-3 text-right">
-                            <button class="text-xs px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded border border-red-200 dark:border-red-800 transition-colors">删除</button>
-                        </td>
-                    `;
+                            <button onclick="deleteFile('${file.key}')" class="text-xs px-2 py-1 text-red-600 border border-red-200 rounded hover:bg-red-50 dark:hover:bg-red-900/30">删除</button>
+                        </td>`;
                     tbody.appendChild(tr);
                 });
-            } catch (e) {
-                console.error("加载文件失败", e);
-            }
+            } catch (e) { console.log(e); }
+        }
+
+        // 保存系统设置
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerText = "保存中...";
+            try {
+                await fetchAuth('/api/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        site_title: document.getElementById('set-title').value,
+                        announcement: document.getElementById('set-announce').value,
+                        allow_download: document.getElementById('set-download').checked ? 1 : 0,
+                        admin_username: document.getElementById('set-user').value || null,
+                        admin_password: document.getElementById('set-pass').value || null
+                    })
+                });
+                alert("配置已更新！如果是修改了账号密码，下次请使用新账号登录。");
+                document.getElementById('set-pass').value = ''; // 清空密码框
+            } catch(e) { alert("保存失败"); }
+            btn.innerText = "保存配置";
+        });
+
+        async function deleteFile(key) {
+            if (!confirm(`确认删除 ${key} ?`)) return;
+            await fetchAuth('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key }) });
+            loadAdminData();
+        }
+
+        async function handleUpload(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const path = prompt("输入目录(如 soft/)，留空传根目录：", ""); if (path === null) return;
+            const formData = new FormData(); formData.append('file', file); formData.append('path', path);
+            const btn = document.getElementById('upload-btn'); btn.innerText = "上传中..."; btn.disabled = true;
+            try {
+                await fetchAuth('/api/admin/upload', { method: 'POST', body: formData });
+                loadAdminData();
+            } catch (err) { alert("上传失败！"); }
+            finally { btn.innerText = "+ 上传文件"; btn.disabled = false; e.target.value = ''; }
         }
     </script>
 </body>
