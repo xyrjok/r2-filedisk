@@ -16,7 +16,7 @@ export default {
     // --- API 1: 获取 R2 文件列表 ---
     if (url.pathname === '/api/files' && request.method === 'GET') {
       try {
-        const listed = await env.BUCKET.list();
+        const listed = await env.r2.list();
         let files = listed.objects.map(obj => ({
           key: obj.key,
           size: obj.size,
@@ -43,7 +43,7 @@ export default {
         return new Response('File path missing', { status: 400 });
       }
 
-      const object = await env.BUCKET.get(filePath);
+      const object = await env.r2.get(filePath);
 
       if (object === null) {
         return new Response('File Not Found', { status: 404 });
