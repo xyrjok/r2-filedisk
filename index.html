@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夏雨资源库 | 高速下载中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 紧凑优化的滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans antialiased">
+    <div class="max-w-4xl mx-auto mt-10 p-4">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">夏雨资源库</h1>
+                <p class="text-sm text-gray-500 mt-1">云端直链 / 极速节点</p>
+            </div>
+            <a href="/admin.html" class="text-sm hover:text-blue-500 transition-colors">Admin Login &rarr;</a>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                        <th class="px-6 py-3 font-medium">文件名</th>
+                        <th class="px-6 py-3 font-medium w-32">大小</th>
+                        <th class="px-6 py-3 font-medium w-48">更新时间</th>
+                        <th class="px-6 py-3 font-medium w-24 text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="file-list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                    <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">正在加载数据...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 格式化文件大小
+        const formatSize = (bytes) => {
+            if (bytes === 0) return '0 B';
+            const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+
+        // 获取并渲染列表
+        async function loadFiles() {
+            try {
+                const res = await fetch('/api/files');
+                const files = await res.json();
+                
+                const tbody = document.getElementById('file-list');
+                tbody.innerHTML = '';
+
+                files.forEach(file => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group";
+                    
+                    // 提取分类和文件名 (例如 apk/Telegram.apk)
+                    const parts = file.key.split('/');
+                    const tag = parts.length > 1 ? `<span class="inline-block px-2 py-0.5 mr-2 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded">${parts[0]}</span>` : '';
+                    const filename = parts.pop();
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-3 flex items-center">
+                            ${tag}
+                            <span class="truncate max-w-xs" title="${filename}">${filename}</span>
+                        </td>
+                        <td class="px-6 py-3 text-gray-500">${formatSize(file.size)}</td>
+                        <td class="px-6 py-3 text-gray-500">${new Date(file.uploaded).toISOString().split('T')[0]}</td>
+                        <td class="px-6 py-3 text-right">
+                            <a href="/api/download/${file.key}" 
+                               class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-black dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                下载
+                            </a>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                document.getElementById('file-list').innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">加载失败，请检查 API 接口</td></tr>`;
+            }
+        }
+
+        loadFiles();
+    </script>
+</body>
+</html>
