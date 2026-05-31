@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>夏雨资源库 | 高速下载中心</title>
+    <title>加载中...</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 紧凑优化的滚动条 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
@@ -14,9 +13,12 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans antialiased">
     <div class="max-w-4xl mx-auto mt-10 p-4">
+        
+        <div id="announcement-bar" class="hidden mb-6 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-lg text-sm border border-blue-100 dark:border-blue-800"></div>
+
         <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">夏雨资源库</h1>
+                <h1 id="site-title" class="text-2xl font-bold tracking-tight">加载中...</h1>
                 <p class="text-sm text-gray-500 mt-1">云端直链 / 极速节点</p>
             </div>
             <a href="/admin.html" class="text-sm hover:text-blue-500 transition-colors">Admin Login &rarr;</a>
@@ -40,14 +42,33 @@
     </div>
 
     <script>
-        // 格式化文件大小
         const formatSize = (bytes) => {
             if (bytes === 0) return '0 B';
             const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         };
 
-        // 获取并渲染列表
+        let allowDownload = 1;
+
+        // 1. 先获取系统配置
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const conf = await res.json();
+                
+                document.title = conf.site_title + ' | 高速下载';
+                document.getElementById('site-title').innerText = conf.site_title;
+                allowDownload = conf.allow_download;
+
+                if (conf.announcement) {
+                    const bar = document.getElementById('announcement-bar');
+                    bar.innerText = conf.announcement;
+                    bar.classList.remove('hidden');
+                }
+            } catch(e) { console.error("加载配置失败", e); }
+        }
+
+        // 2. 再加载文件列表
         async function loadFiles() {
             try {
                 const res = await fetch('/api/files');
@@ -59,34 +80,34 @@
                 files.forEach(file => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group";
-                    
-                    // 提取分类和文件名 (例如 apk/Telegram.apk)
                     const parts = file.key.split('/');
                     const tag = parts.length > 1 ? `<span class="inline-block px-2 py-0.5 mr-2 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded">${parts[0]}</span>` : '';
                     const filename = parts.pop();
 
+                    // 判断是否允许下载生成对应按钮
+                    let actionBtn = `<span class="text-red-500 text-xs">暂不开放</span>`;
+                    if (allowDownload === 1) {
+                        actionBtn = `<a href="/api/download/${file.key}" class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-black dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">下载</a>`;
+                    }
+
                     tr.innerHTML = `
-                        <td class="px-6 py-3 flex items-center">
-                            ${tag}
-                            <span class="truncate max-w-xs" title="${filename}">${filename}</span>
-                        </td>
+                        <td class="px-6 py-3 flex items-center">${tag}<span class="truncate max-w-xs" title="${filename}">${filename}</span></td>
                         <td class="px-6 py-3 text-gray-500">${formatSize(file.size)}</td>
                         <td class="px-6 py-3 text-gray-500">${new Date(file.uploaded).toISOString().split('T')[0]}</td>
-                        <td class="px-6 py-3 text-right">
-                            <a href="/api/download/${file.key}" 
-                               class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-black dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                                下载
-                            </a>
-                        </td>
+                        <td class="px-6 py-3 text-right">${actionBtn}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (error) {
-                document.getElementById('file-list').innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">加载失败，请检查 API 接口</td></tr>`;
+                document.getElementById('file-list').innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">加载失败，请检查网络</td></tr>`;
             }
         }
 
-        loadFiles();
+        async function init() {
+            await loadSettings();
+            await loadFiles();
+        }
+        init();
     </script>
 </body>
 </html>
