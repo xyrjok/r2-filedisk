@@ -1,0 +1,12 @@
+name = "r2-filedisk"
+pages_build_output_dir = "."  # ✨ 只需要把 public 改成 .
+compatibility_date = "2024-05-01"
+
+[[d1_databases]]
+binding = "db"
+database_name = "r2-filedisk"
+database_id = "你的_D1_ID"
+
+[[r2_buckets]]
+binding = "r2"
+bucket_name = "r2-filedisk"
