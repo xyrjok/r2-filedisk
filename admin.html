@@ -55,7 +55,7 @@
             
             <div id="view-dashboard" class="view-section">
                 <h2 class="text-2xl font-bold mb-6">仪表盘</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <p class="text-gray-500 text-sm">存储文件总数</p>
                         <p class="text-3xl font-bold mt-2 text-blue-600" id="stat-files">-</p>
@@ -63,6 +63,10 @@
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <p class="text-gray-500 text-sm">历史总下载量</p>
                         <p class="text-3xl font-bold mt-2 text-green-600" id="stat-downloads">-</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <p class="text-gray-500 text-sm">总占用容量</p>
+                        <p class="text-3xl font-bold mt-2 text-purple-600" id="stat-size">-</p>
                     </div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -267,6 +271,7 @@
             const data = await (await fetchAuth('/api/admin/stats')).json();
             document.getElementById('stat-files').innerText = data.fileCount;
             document.getElementById('stat-downloads').innerText = data.downloadCount;
+            document.getElementById('stat-size').innerText = formatSize(data.totalSize || 0);
             
             // 绘制图表
             const ctx = document.getElementById('dlChart').getContext('2d');
@@ -302,6 +307,7 @@
                     <td class="px-6 py-4 text-gray-500">${new Date(file.uploaded).toISOString().split('T')[0]}</td>
                     <td class="px-6 py-4 text-green-600 font-medium">${file.downloads} 次</td>
                     <td class="px-6 py-4 text-right space-x-2">
+                        <button onclick="copyLink('${file.key}')" class="text-xs px-3 py-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded">复制链接</button>
                         <button onclick="editFile()" class="text-xs px-3 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded">编辑</button>
                         <button onclick="deleteFile('${file.key}')" class="text-xs px-3 py-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded">删除</button>
                     </td>`;
@@ -372,6 +378,14 @@
         });
 
         // 文件操作
+        function copyLink(key) {
+            const url = window.location.origin + '/api/download/' + key;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('下载链接已复制：\n' + url);
+            }).catch(() => {
+                prompt('复制失败，请手动复制以下链接：', url);
+            });
+        }
         async function deleteFile(key) {
             if (!confirm(`确认删除 ${key} ?`)) return;
             await fetchAuth('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key }) });
