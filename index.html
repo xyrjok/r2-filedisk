@@ -59,6 +59,10 @@
                 document.title = conf.site_title + ' | 高速下载';
                 document.getElementById('site-title').innerText = conf.site_title;
                 allowDownload = conf.allow_download;
+                if (conf.show_index === 0) {
+                    document.body.innerHTML = '<div class="min-h-screen flex items-center justify-center text-gray-500 text-xl font-bold">首页已关闭显示</div>';
+                    return;
+                }
 
                 if (conf.announcement) {
                     const bar = document.getElementById('announcement-bar');
