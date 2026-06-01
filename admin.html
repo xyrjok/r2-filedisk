@@ -199,6 +199,14 @@
         const DOM = { login: document.getElementById('login-panel'), dash: document.getElementById('dashboard-panel'), err: document.getElementById('login-error') };
         let currentToken = localStorage.getItem('r2_admin_token');
         let chartInstance = null;
+        function showToast(msg) {
+            const div = document.createElement('div');
+            div.className = 'fixed top-10 left-1/2 transform -translate-x-1/2 px-6 py-3 bg-gray-800 dark:bg-gray-200 text-white dark:text-black text-sm rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 translate-y-[-20px]';
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => { div.classList.remove('opacity-0', 'translate-y-[-20px]'); }, 10);
+            setTimeout(() => { div.classList.add('opacity-0', 'translate-y-[-20px]'); setTimeout(() => div.remove(), 300); }, 2500);
+        }
         const formatSize = (bytes) => {
             if (bytes === 0) return '0 B';
             const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -376,9 +384,9 @@
                         admin_password: document.getElementById('set-pass').value || null
                     })
                 });
-                alert("配置已更新！"); document.getElementById('set-pass').value = '';
+                showToast("配置已更新！"); document.getElementById('set-pass').value = '';
                 preLoginInit(); // 刷新头部可能存在的Logo
-            } catch(e) { alert("保存失败"); }
+            } catch(e) { showToast("保存失败"); }
             btn.innerText = "保存所有配置";
         });
 
@@ -386,7 +394,7 @@
         function copyLink(key) {
             const url = window.location.origin + '/api/download/' + key;
             navigator.clipboard.writeText(url).then(() => {
-                alert('下载链接已复制：\n' + url);
+                showToast('已复制下载链接！');
             }).catch(() => {
                 prompt('复制失败，请手动复制以下链接：', url);
             });
