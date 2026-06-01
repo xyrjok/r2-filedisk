@@ -87,7 +87,7 @@
                     // 判断是否允许下载生成对应按钮
                     let actionBtn = `<span class="text-red-500 text-xs">暂不开放</span>`;
                     if (allowDownload === 1) {
-                        actionBtn = `<a href="/api/download/${file.key}" class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-black dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">下载</a>`;
+                        actionBtn = `<a href="/api/download/${file.key}" class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-black dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">下载</a>`;
                     }
 
                     tr.innerHTML = `
