@@ -308,7 +308,6 @@
                     <td class="px-6 py-4 text-green-600 font-medium">${file.downloads} 次</td>
                     <td class="px-6 py-4 text-right space-x-2">
                         <button onclick="copyLink('${file.key}')" class="text-xs px-3 py-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded">复制链接</button>
-                        <button onclick="editFile()" class="text-xs px-3 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded">编辑</button>
                         <button onclick="deleteFile('${file.key}')" class="text-xs px-3 py-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded">删除</button>
                     </td>`;
                 tbody.appendChild(tr);
@@ -390,9 +389,6 @@
             if (!confirm(`确认删除 ${key} ?`)) return;
             await fetchAuth('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key }) });
             loadFiles();
-        }
-        function editFile() {
-            alert("R2 对象存储限制：无法直接重命名或编辑文件。请先删除原文件，修改名称后重新上传至指定分类目录。");
         }
         async function handleUpload(e) {
             const file = e.target.files[0]; if (!file) return;
