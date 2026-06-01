@@ -49,7 +49,7 @@ export default {
       return new Response(object.body, { headers });
     }
 
-    // --- 后台 API: 登录 ---
+    // --- 后台 API: 密码登录 ---
     if (url.pathname === '/api/admin/login' && request.method === 'POST') {
       const { username, password } = await request.json();
       const user = await env.db.prepare("SELECT * FROM system_settings WHERE admin_username = ? AND admin_password = ? AND id = 1")
@@ -60,6 +60,37 @@ export default {
         return new Response(JSON.stringify({ success: true, token }), { headers: { 'Content-Type': 'application/json' } });
       } else {
         return new Response(JSON.stringify({ success: false, error: '账号或密码错误' }), { status: 401 });
+      }
+    }
+
+    // --- 后台 API: TG 快捷登录 ---
+    if (url.pathname === '/api/admin/tg_login' && request.method === 'POST') {
+      const tgData = await request.json();
+      const botToken = env.TG_BOT_TOKEN; 
+      if (!botToken) return new Response(JSON.stringify({ success: false, error: '后端未配置 TG_BOT_TOKEN' }), { status: 500 });
+      
+      // HMAC-SHA256 校验 TG 数据真伪 (官方安全规范)
+      const { hash, ...dataCheck } = tgData;
+      const dataCheckString = Object.keys(dataCheck).sort().map(k => `${k}=${dataCheck[k]}`).join('\n');
+      const encoder = new TextEncoder();
+      
+      try {
+        const secretKey = await crypto.subtle.importKey("raw", await crypto.subtle.digest("SHA-256", encoder.encode(botToken)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+        const signature = await crypto.subtle.sign("HMAC", secretKey, encoder.encode(dataCheckString));
+        const hexSignature = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        if (hexSignature !== hash) return new Response(JSON.stringify({ success: false, error: 'TG 授权数据被篡改' }), { status: 403 });
+
+        const authUser = await env.db.prepare("SELECT * FROM tg_admins WHERE tg_id = ?").bind(tgData.id.toString()).first();
+        if (authUser) {
+          const token = crypto.randomUUID();
+          await env.db.prepare("UPDATE system_settings SET admin_token = ? WHERE id = 1").bind(token).run();
+          return new Response(JSON.stringify({ success: true, token }), { headers: { 'Content-Type': 'application/json' } });
+        } else {
+          return new Response(JSON.stringify({ success: false, error: '当前 TG 账号未在后台授权' }), { status: 403 });
+        }
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: '验证处理异常' }), { status: 500 });
       }
     }
 
@@ -74,11 +105,11 @@ export default {
       const user = await env.db.prepare("SELECT * FROM system_settings WHERE admin_token = ? AND id = 1").bind(token).first();
       if (!user) return new Response(JSON.stringify({ error: 'Invalid Token' }), { status: 401 });
 
-      // 【修改】获取统计数据及图表数据
+      // 获取统计数据及图表数据
       if (url.pathname === '/api/admin/stats' && request.method === 'GET') {
         const list = await env.r2.list();
         const dbRes = await env.db.prepare("SELECT COUNT(*) as count FROM download_logs").first();
-        // 新增：累加 R2 对象列表中所有文件的 size 计算总容量
+        // 累加 R2 对象列表中所有文件的 size 计算总容量
         const totalSize = list.objects.reduce((sum, obj) => sum + obj.size, 0);
         // 获取近7天下载趋势
         const chartRes = await env.db.prepare(`
@@ -95,7 +126,7 @@ export default {
         }));
       }
 
-      // 【新增】获取后台专属文件列表(含独立下载量)
+      // 获取后台专属文件列表(含独立下载量)
       if (url.pathname === '/api/admin/files' && request.method === 'GET') {
         const listed = await env.r2.list();
         const dlsRes = await env.db.prepare("SELECT file_path, COUNT(*) as d_count FROM download_logs GROUP BY file_path").all();
@@ -111,7 +142,7 @@ export default {
         return new Response(JSON.stringify(files));
       }
 
-      // 【新增】分类管理 CRUD
+      // 分类管理 CRUD
       if (url.pathname === '/api/admin/categories' && request.method === 'GET') {
         const res = await env.db.prepare("SELECT * FROM categories ORDER BY id DESC").all();
         return new Response(JSON.stringify(res.results));
@@ -124,6 +155,22 @@ export default {
       if (url.pathname === '/api/admin/categories' && request.method === 'DELETE') {
         const { id } = await request.json();
         await env.db.prepare("DELETE FROM categories WHERE id = ?").bind(id).run();
+        return new Response(JSON.stringify({ success: true }));
+      }
+      
+      // TG 管理员 CRUD
+      if (url.pathname === '/api/admin/tg_users' && request.method === 'GET') {
+        const res = await env.db.prepare("SELECT * FROM tg_admins ORDER BY id DESC").all();
+        return new Response(JSON.stringify(res.results));
+      }
+      if (url.pathname === '/api/admin/tg_users' && request.method === 'POST') {
+        const { tg_id, note } = await request.json();
+        await env.db.prepare("INSERT INTO tg_admins (tg_id, note) VALUES (?, ?)").bind(tg_id, note).run();
+        return new Response(JSON.stringify({ success: true }));
+      }
+      if (url.pathname === '/api/admin/tg_users' && request.method === 'DELETE') {
+        const { id } = await request.json();
+        await env.db.prepare("DELETE FROM tg_admins WHERE id = ?").bind(id).run();
         return new Response(JSON.stringify({ success: true }));
       }
 
