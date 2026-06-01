@@ -6,11 +6,12 @@ CREATE TABLE system_settings (
   site_title TEXT, 
   site_icon TEXT, 
   announcement TEXT, 
-  allow_download INTEGER 
+  allow_download INTEGER,
+  show_index INTEGER DEFAULT 1
 ); 
 
-INSERT INTO system_settings (id, admin_username, admin_password, site_title, site_icon, announcement, allow_download) 
-VALUES (1, 'admin', '123456', '夏雨资源库', '/assets/xyrjico.webp', '欢迎访问！请遵守下载规则。', 1); 
+INSERT INTO system_settings (id, admin_username, admin_password, site_title, site_icon, announcement, allow_download, show_index) 
+VALUES (1, 'admin', '123456', '夏雨资源库', '/assets/xyrjico.webp', '欢迎访问！请遵守下载规则。', 1, 1);
 
 
 CREATE TABLE IF NOT EXISTS categories ( 
