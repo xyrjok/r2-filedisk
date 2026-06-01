@@ -215,6 +215,8 @@
 
         // 页面初始化：读取动态配置渲染登录页
         async function preLoginInit() {
+            // 如果已登录，直接跳过网络请求渲染后台，杜绝闪烁
+            if (currentToken) return showDashboard(); 
             try {
                 const res = await fetch('/api/settings');
                 const conf = await res.json();
@@ -224,7 +226,6 @@
                 }
                 document.getElementById('login-title').innerText = conf.site_title || '后台登录';
             } catch(e) {}
-            if (currentToken) showDashboard();
         }
         preLoginInit();
 
@@ -248,7 +249,8 @@
         function showDashboard() {
             DOM.login.classList.add('hidden'); DOM.dash.classList.remove('hidden');
             requestAnimationFrame(() => DOM.dash.classList.add('fade-enter-active'));
-            switchTab('dashboard'); // 默认显示仪表盘
+            const lastTab = localStorage.getItem('r2_active_tab') || 'dashboard';
+            switchTab(lastTab);
         }
 
         function logout() {
@@ -265,6 +267,7 @@
 
         // 标签切换逻辑
         function switchTab(tabId) {
+            localStorage.setItem('r2_active_tab', tabId);
             // 样式切换
             document.querySelectorAll('aside a').forEach(el => el.classList.remove('nav-active'));
             document.getElementById('nav-' + tabId).classList.add('nav-active');
