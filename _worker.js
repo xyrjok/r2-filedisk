@@ -8,9 +8,9 @@ export default {
   },
 
   async handleAPI(request, env, ctx, url) {
-    // --- 开放 API: 获取系统配置 (前端读取标题、公告等) ---
+    // --- 开放 API: 获取系统配置 (包含图标) ---
     if (url.pathname === '/api/settings' && request.method === 'GET') {
-      const settings = await env.db.prepare("SELECT site_title, announcement, allow_download FROM system_settings WHERE id = 1").first();
+      const settings = await env.db.prepare("SELECT site_title, site_icon, announcement, allow_download FROM system_settings WHERE id = 1").first();
       return new Response(JSON.stringify(settings || {}), { headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -27,7 +27,6 @@ export default {
 
     // --- 开放 API: R2 直链下载 ---
     if (url.pathname.startsWith('/api/download/')) {
-      // 1. 拦截器：检查系统配置是否允许下载
       const settings = await env.db.prepare("SELECT allow_download FROM system_settings WHERE id = 1").first();
       if (settings && settings.allow_download === 0) {
          return new Response('站点维护中，已暂停下载服务', { status: 403 });
@@ -39,7 +38,6 @@ export default {
       const object = await env.r2.get(filePath);
       if (object === null) return new Response('File Not Found', { status: 404 });
 
-      // 2. 异步记录下载日志
       ctx.waitUntil(
         env.db.prepare("INSERT INTO download_logs (file_path) VALUES (?)").bind(filePath).run()
       );
@@ -76,25 +74,67 @@ export default {
       const user = await env.db.prepare("SELECT * FROM system_settings WHERE admin_token = ? AND id = 1").bind(token).first();
       if (!user) return new Response(JSON.stringify({ error: 'Invalid Token' }), { status: 401 });
 
-      // 统计数据
+      // 【修改】获取统计数据及图表数据
       if (url.pathname === '/api/admin/stats' && request.method === 'GET') {
         const list = await env.r2.list();
         const dbRes = await env.db.prepare("SELECT COUNT(*) as count FROM download_logs").first();
-        return new Response(JSON.stringify({ fileCount: list.objects.length, downloadCount: dbRes.count }));
+        // 获取近7天下载趋势
+        const chartRes = await env.db.prepare(`
+          SELECT date(download_time) as d_date, COUNT(*) as d_count 
+          FROM download_logs 
+          WHERE download_time >= date('now', '-7 days') 
+          GROUP BY date(download_time) ORDER BY d_date ASC
+        `).all();
+        return new Response(JSON.stringify({ 
+            fileCount: list.objects.length, 
+            downloadCount: dbRes.count,
+            trend: chartRes.results
+        }));
       }
 
-      // 获取当前设置
+      // 【新增】获取后台专属文件列表(含独立下载量)
+      if (url.pathname === '/api/admin/files' && request.method === 'GET') {
+        const listed = await env.r2.list();
+        const dlsRes = await env.db.prepare("SELECT file_path, COUNT(*) as d_count FROM download_logs GROUP BY file_path").all();
+        const dlsMap = {};
+        dlsRes.results.forEach(r => dlsMap[r.file_path] = r.d_count);
+
+        let files = listed.objects.map(obj => ({ 
+            key: obj.key, 
+            size: obj.size, 
+            uploaded: obj.uploaded,
+            downloads: dlsMap[obj.key] || 0
+        }));
+        return new Response(JSON.stringify(files));
+      }
+
+      // 【新增】分类管理 CRUD
+      if (url.pathname === '/api/admin/categories' && request.method === 'GET') {
+        const res = await env.db.prepare("SELECT * FROM categories ORDER BY id DESC").all();
+        return new Response(JSON.stringify(res.results));
+      }
+      if (url.pathname === '/api/admin/categories' && request.method === 'POST') {
+        const { name, folder } = await request.json();
+        await env.db.prepare("INSERT INTO categories (name, folder) VALUES (?, ?)").bind(name, folder).run();
+        return new Response(JSON.stringify({ success: true }));
+      }
+      if (url.pathname === '/api/admin/categories' && request.method === 'DELETE') {
+        const { id } = await request.json();
+        await env.db.prepare("DELETE FROM categories WHERE id = ?").bind(id).run();
+        return new Response(JSON.stringify({ success: true }));
+      }
+
+      // 获取当前设置 (含图标)
       if (url.pathname === '/api/admin/settings' && request.method === 'GET') {
-        const set = await env.db.prepare("SELECT admin_username, site_title, announcement, allow_download FROM system_settings WHERE id = 1").first();
+        const set = await env.db.prepare("SELECT admin_username, site_title, site_icon, announcement, allow_download FROM system_settings WHERE id = 1").first();
         return new Response(JSON.stringify(set));
       }
 
-      // 更新当前设置
+      // 更新当前设置 (含图标)
       if (url.pathname === '/api/admin/settings' && request.method === 'POST') {
-        const { site_title, announcement, allow_download, admin_username, admin_password } = await request.json();
-        let query = "UPDATE system_settings SET site_title = ?, announcement = ?, allow_download = ?";
-        let params = [site_title, announcement, allow_download];
-        // 如果提交了账号密码，也一并更新
+        const { site_title, site_icon, announcement, allow_download, admin_username, admin_password } = await request.json();
+        let query = "UPDATE system_settings SET site_title = ?, site_icon = ?, announcement = ?, allow_download = ?";
+        let params = [site_title, site_icon, announcement, allow_download];
         if (admin_username && admin_password) {
            query += ", admin_username = ?, admin_password = ?";
            params.push(admin_username, admin_password);
