@@ -10,7 +10,7 @@ export default {
   async handleAPI(request, env, ctx, url) {
     // --- 开放 API: 获取系统配置 (包含图标) ---
     if (url.pathname === '/api/settings' && request.method === 'GET') {
-      const settings = await env.db.prepare("SELECT site_title, site_icon, announcement, allow_download FROM system_settings WHERE id = 1").first();
+      const settings = await env.db.prepare("SELECT site_title, site_icon, announcement, allow_download, show_index FROM system_settings WHERE id = 1").first();
       return new Response(JSON.stringify(settings || {}), { headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -129,15 +129,15 @@ export default {
 
       // 获取当前设置 (含图标)
       if (url.pathname === '/api/admin/settings' && request.method === 'GET') {
-        const set = await env.db.prepare("SELECT admin_username, site_title, site_icon, announcement, allow_download FROM system_settings WHERE id = 1").first();
+        const set = await env.db.prepare("SELECT admin_username, site_title, site_icon, announcement, allow_download, show_index FROM system_settings WHERE id = 1").first();
         return new Response(JSON.stringify(set));
       }
 
       // 更新当前设置 (含图标)
       if (url.pathname === '/api/admin/settings' && request.method === 'POST') {
-        const { site_title, site_icon, announcement, allow_download, admin_username, admin_password } = await request.json();
-        let query = "UPDATE system_settings SET site_title = ?, site_icon = ?, announcement = ?, allow_download = ?";
-        let params = [site_title, site_icon, announcement, allow_download];
+        const { site_title, site_icon, announcement, allow_download, show_index, admin_username, admin_password } = await request.json();
+        let query = "UPDATE system_settings SET site_title = ?, site_icon = ?, announcement = ?, allow_download = ?, show_index = ?";
+        let params = [site_title, site_icon, announcement, allow_download, show_index];
         if (admin_username && admin_password) {
            query += ", admin_username = ?, admin_password = ?";
            params.push(admin_username, admin_password);
