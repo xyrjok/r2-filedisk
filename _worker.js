@@ -78,6 +78,8 @@ export default {
       if (url.pathname === '/api/admin/stats' && request.method === 'GET') {
         const list = await env.r2.list();
         const dbRes = await env.db.prepare("SELECT COUNT(*) as count FROM download_logs").first();
+        // 新增：累加 R2 对象列表中所有文件的 size 计算总容量
+        const totalSize = list.objects.reduce((sum, obj) => sum + obj.size, 0);
         // 获取近7天下载趋势
         const chartRes = await env.db.prepare(`
           SELECT date(download_time) as d_date, COUNT(*) as d_count 
@@ -87,6 +89,7 @@ export default {
         `).all();
         return new Response(JSON.stringify({ 
             fileCount: list.objects.length, 
+            totalSize: totalSize,
             downloadCount: dbRes.count,
             trend: chartRes.results
         }));
