@@ -194,6 +194,13 @@
 
         </main>
     </div>
+    <div id="qr-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 fade-enter" onclick="closeQRCode()">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 transform transition-all">
+            <h3 class="text-center font-bold mb-4 text-gray-800 dark:text-gray-200">扫码下载</h3>
+            <img id="qr-image" src="" alt="加载中..." class="w-48 h-48 mx-auto rounded border dark:border-gray-600">
+            <p class="text-xs text-gray-500 text-center mt-3">点击任意空白处关闭</p>
+        </div>
+    </div>
 
     <script>
         const DOM = { login: document.getElementById('login-panel'), dash: document.getElementById('dashboard-panel'), err: document.getElementById('login-error') };
@@ -323,6 +330,7 @@
                     <td class="px-6 py-4 text-green-600 font-medium">${file.downloads} 次</td>
                     <td class="px-6 py-4 text-right space-x-2">
                         <button onclick="copyLink('${file.key}')" class="text-xs px-3 py-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded">复制链接</button>
+                        <button onclick="showQRCode('${file.key}')" class="text-xs px-2 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded" title="查看二维码">📱</button>
                         <button onclick="deleteFile('${file.key}')" class="text-xs px-3 py-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded">删除</button>
                     </td>`;
                 tbody.appendChild(tr);
@@ -394,6 +402,19 @@
         });
 
         // 文件操作
+        function showQRCode(key) {
+            const url = encodeURIComponent(window.location.origin + '/api/download/' + key);
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${url}&margin=10`;
+            const modal = document.getElementById('qr-modal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => modal.classList.add('fade-enter-active'));
+        }
+
+        function closeQRCode() {
+            const modal = document.getElementById('qr-modal');
+            modal.classList.remove('fade-enter-active');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
         function copyLink(key) {
             const url = window.location.origin + '/api/download/' + key;
             navigator.clipboard.writeText(url).then(() => {
